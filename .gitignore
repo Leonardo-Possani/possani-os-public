@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environments
+.env
+.env.*
+.venv/
+venv/
+env/
+
+# Editors
+.vscode/
+.idea/
+
+# Databases / local files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# Aider
+.aider*
