@@ -26,6 +26,7 @@ SessionLocal = SessionFactory
 
 # Models must be imported here to be registered with Base for migrations
 from app.customers.models import CustomerModel # noqa: E402,F401
+from app.service_orders.models import ServiceOrderModel # noqa: E402,F401
 
 def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()

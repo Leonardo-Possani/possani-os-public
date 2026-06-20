@@ -69,6 +69,31 @@ def test_list_customers_service_delegates_filter_to_repository() -> None:
     assert service_result == repository_result
 
 
+def test_list_customers_service_delegates_pagination_to_repository() -> None:
+    repository = InMemoryCustomerRepository()
+    service = CustomerService(repository=repository)
+
+    service.create(
+        name="Maria Clara",
+        whatsapp="11999991234",
+        cpf="529.982.247-25",
+    )
+    expected_customer = service.create(
+        name="João Silva",
+        whatsapp="11988887777",
+        cnpj="11.222.333/0001-81",
+    )
+    service.create(
+        name="Ana Clara",
+        whatsapp="11977776666",
+        cpf="111.444.777-35",
+    )
+
+    customers = service.list(limit=1, offset=1)
+
+    assert customers == [expected_customer]
+
+
 def test_in_memory_repository_uses_customer_id_as_storage_key() -> None:
     repository = InMemoryCustomerRepository()
     service = CustomerService(repository=repository)

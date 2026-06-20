@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.customers.interfaces import AbstractCustomerRepository
 from app.dependencies import get_customer_repository
@@ -41,15 +41,19 @@ async def create_customer(
         )
     except CustomerAlreadyExistsError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
     return CustomerRead.from_domain(customer)
 
 
 @router.get("/", response_model=list[CustomerRead])
 async def list_customers(
+    limit: int = Query(default=100, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     service: CustomerService = Depends(get_customer_service),
 ) -> list[CustomerRead]:
-    customers = service.list()
+    customers = service.list(limit=limit, offset=offset)
     return [CustomerRead.from_domain(customer) for customer in customers]
 
 

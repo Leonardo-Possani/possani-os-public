@@ -119,7 +119,11 @@ def test_deactivate_customer_uses_repository_contract_without_internal_items() -
             self._customer = customer
             return customer
 
-        def list(self) -> list[Customer]:
+        def list(
+            self,
+            limit: int | None = None,
+            offset: int | None = None,
+        ) -> list[Customer]:
             return [self._customer]
 
     repository = RepositoryWithoutItems(customer)

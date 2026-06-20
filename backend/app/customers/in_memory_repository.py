@@ -1,7 +1,6 @@
 from uuid import UUID
 from app.customers.domain import Customer
 from app.customers.interfaces import AbstractCustomerRepository
-from app.customers.service import CustomerNotFoundError
 
 class InMemoryCustomerRepository(AbstractCustomerRepository):
     def __init__(self) -> None:
@@ -44,7 +43,7 @@ class InMemoryCustomerRepository(AbstractCustomerRepository):
 
     def update(self, customer: Customer) -> Customer:
         if customer.id not in self.items:
-            raise CustomerNotFoundError("Customer not found.")
+            raise ValueError("Customer with this ID does not exist.")
 
         self.items[customer.id] = customer
         return customer
@@ -52,6 +51,10 @@ class InMemoryCustomerRepository(AbstractCustomerRepository):
     def get_by_id(self, id: UUID) -> Customer | None:
         return self.items.get(id)
 
-    def list(self) -> list[Customer]:
+    def list(self, limit: int | None = None, offset: int | None = None) -> list[Customer]:
         # Return only active customers in reverse insertion order to simulate created_at DESC
-        return [c for c in reversed(list(self.items.values())) if c.is_active]
+        customers = [c for c in reversed(list(self.items.values())) if c.is_active]
+        start = offset or 0
+        if limit is None:
+            return customers[start:]
+        return customers[start:start + limit]

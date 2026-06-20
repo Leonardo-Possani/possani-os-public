@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 import pytest
@@ -105,6 +106,72 @@ async def test_create_customer_persists_in_postgres(
 
 
 @pytest.mark.anyio
+async def test_create_customer_without_cpf_or_cnpj_persists_in_postgres(
+    postgres_api,
+    postgres_session: Session,
+) -> None:
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        response = await client.post(
+            "/customers/",
+            json={
+                "name": "Maria Clara",
+                "whatsapp": "(11) 99999-1234",
+            },
+        )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["name"] == "Maria Clara"
+    assert body["whatsapp"] == "11999991234"
+    assert body["cpf"] is None
+    assert body["cnpj"] is None
+
+    persisted_customer = (
+        postgres_session.execute(
+            text(
+                """
+                SELECT name, whatsapp, cpf, cnpj
+                FROM customers
+                WHERE id = :id
+                """
+            ),
+            {"id": body["id"]},
+        )
+        .mappings()
+        .one()
+    )
+    assert persisted_customer["name"] == "Maria Clara"
+    assert persisted_customer["whatsapp"] == "11999991234"
+    assert persisted_customer["cpf"] is None
+    assert persisted_customer["cnpj"] is None
+
+
+@pytest.mark.anyio
+async def test_create_customer_returns_bad_request_for_cpf_and_cnpj_in_postgres(
+    postgres_api,
+) -> None:
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        response = await client.post(
+            "/customers/",
+            json={
+                "name": "Maria Clara",
+                "whatsapp": "(11) 99999-1234",
+                "cpf": "529.982.247-25",
+                "cnpj": "11.222.333/0001-81",
+            },
+        )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "CPF and CNPJ are mutually exclusive."
+
+
+@pytest.mark.anyio
 async def test_get_customer_returns_customer_persisted_in_postgres(
     postgres_api,
 ) -> None:
@@ -138,6 +205,91 @@ async def test_get_customer_returns_customer_persisted_in_postgres(
         "is_active": True,
         "deactivated_at": None,
     }
+
+
+@pytest.mark.anyio
+async def test_list_customers_applies_pagination_in_postgres(
+    postgres_api,
+    postgres_session: Session,
+) -> None:
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        first_response = await client.post(
+            "/customers/",
+            json={
+                "name": "Maria Clara",
+                "whatsapp": "11999991234",
+                "cpf": "529.982.247-25",
+            },
+        )
+        second_response = await client.post(
+            "/customers/",
+            json={
+                "name": "Ana Clara",
+                "whatsapp": "11988887777",
+                "cnpj": "11.222.333/0001-81",
+            },
+        )
+        third_response = await client.post(
+            "/customers/",
+            json={
+                "name": "Joao Silva",
+                "whatsapp": "11977776666",
+                "cpf": "111.444.777-35",
+            },
+        )
+        postgres_session.execute(
+            text(
+                """
+                UPDATE customers
+                SET created_at = :created_at
+                WHERE id = :id
+                """
+            ),
+            {
+                "id": first_response.json()["id"],
+                "created_at": datetime(2026, 1, 1, 10, 0, tzinfo=timezone.utc),
+            },
+        )
+        postgres_session.execute(
+            text(
+                """
+                UPDATE customers
+                SET created_at = :created_at
+                WHERE id = :id
+                """
+            ),
+            {
+                "id": second_response.json()["id"],
+                "created_at": datetime(2026, 1, 2, 10, 0, tzinfo=timezone.utc),
+            },
+        )
+        postgres_session.execute(
+            text(
+                """
+                UPDATE customers
+                SET created_at = :created_at
+                WHERE id = :id
+                """
+            ),
+            {
+                "id": third_response.json()["id"],
+                "created_at": datetime(2026, 1, 3, 10, 0, tzinfo=timezone.utc),
+            },
+        )
+        postgres_session.commit()
+
+        list_response = await client.get("/customers/?limit=1&offset=1")
+
+    assert first_response.status_code == 201
+    assert second_response.status_code == 201
+    assert third_response.status_code == 201
+    assert list_response.status_code == 200
+    assert [item["id"] for item in list_response.json()] == [
+        second_response.json()["id"],
+    ]
 
 
 @pytest.mark.anyio
