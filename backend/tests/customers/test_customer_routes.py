@@ -67,6 +67,52 @@ async def test_create_customer_returns_created_customer(
 
 
 @pytest.mark.anyio
+async def test_create_customer_accepts_without_cpf_or_cnpj(
+    customer_repository: InMemoryCustomerRepository,
+) -> None:
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        response = await client.post(
+            "/customers/",
+            json={
+                "name": "Maria Clara",
+                "whatsapp": "(11) 99999-1234",
+            },
+        )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["name"] == "Maria Clara"
+    assert body["whatsapp"] == "11999991234"
+    assert body["cpf"] is None
+    assert body["cnpj"] is None
+
+
+@pytest.mark.anyio
+async def test_create_customer_returns_bad_request_for_cpf_and_cnpj(
+    customer_repository: InMemoryCustomerRepository,
+) -> None:
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        response = await client.post(
+            "/customers/",
+            json={
+                "name": "Maria Clara",
+                "whatsapp": "(11) 99999-1234",
+                "cpf": "529.982.247-25",
+                "cnpj": "11.222.333/0001-81",
+            },
+        )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "CPF and CNPJ are mutually exclusive."
+
+
+@pytest.mark.anyio
 async def test_create_customer_returns_conflict_for_duplicate_whatsapp(
     customer_repository: InMemoryCustomerRepository,
 ) -> None:
@@ -374,6 +420,55 @@ async def test_list_customers_excludes_deactivated_customers(
             "deactivated_at": None,
         }
     ]
+
+
+@pytest.mark.anyio
+async def test_list_customers_applies_limit_and_offset(
+    customer_repository: InMemoryCustomerRepository,
+) -> None:
+    service = CustomerService(repository=customer_repository)
+    first = service.create(
+        name="Maria Clara",
+        whatsapp="(11) 99999-1234",
+        cpf="529.982.247-25",
+    )
+    second = service.create(
+        name="Ana Clara",
+        whatsapp="(11) 98888-7777",
+        cnpj="11.222.333/0001-81",
+    )
+    service.create(
+        name="Joao Silva",
+        whatsapp="(11) 97777-6666",
+        cpf="111.444.777-35",
+    )
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        response = await client.get("/customers/?limit=2&offset=1")
+
+    assert response.status_code == 200
+    assert [item["id"] for item in response.json()] == [
+        str(second.id),
+        str(first.id),
+    ]
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("query_string", ["limit=0", "limit=101", "offset=-1"])
+async def test_list_customers_rejects_invalid_pagination_params(
+    customer_repository: InMemoryCustomerRepository,
+    query_string: str,
+) -> None:
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        response = await client.get(f"/customers/?{query_string}")
+
+    assert response.status_code == 422
 
 
 @pytest.mark.anyio

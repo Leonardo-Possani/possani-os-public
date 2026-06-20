@@ -24,5 +24,5 @@ class AbstractCustomerRepository(Protocol):
     def update(self, customer: Customer) -> Customer:
         ...
 
-    def list(self) -> list[Customer]:
+    def list(self, limit: int | None = None, offset: int | None = None) -> list[Customer]:
         ...

@@ -32,8 +32,8 @@ class CustomerService:
         zip_code: str | None = None,
         notes: str | None = None,
     ) -> Customer:
-        if (cpf is None) == (cnpj is None):
-            raise ValueError("Exactly one of CPF or CNPJ must be provided.")
+        if cpf is not None and cnpj is not None:
+            raise ValueError("CPF and CNPJ are mutually exclusive.")
 
         customer_name = CustomerName(name)
         customer_whatsapp = Whatsapp(whatsapp)
@@ -74,8 +74,8 @@ class CustomerService:
         except ValueError as exc:
             raise CustomerAlreadyExistsError(str(exc)) from exc
 
-    def list(self) -> list[Customer]:
-        return self.repository.list()
+    def list(self, limit: int | None = None, offset: int | None = None) -> list[Customer]:
+        return self.repository.list(limit=limit, offset=offset)
 
     def get_by_id(self, id: UUID) -> Customer | None:
         return self.repository.get_by_id(id)
@@ -152,7 +152,7 @@ class CustomerService:
         except ValueError as exc:
             if "already exists" in str(exc):
                 raise CustomerAlreadyExistsError(str(exc)) from exc
-            raise
+            raise CustomerNotFoundError("Customer not found.") from exc
 
     def deactivate_customer(self, id: UUID) -> Customer:
         customer = self.repository.get_by_id(id)

@@ -65,7 +65,7 @@ class SqlAlchemyCustomerRepository(AbstractCustomerRepository):
             setattr(model, attr, getattr(updated_model, attr))
         
         try:
-            self.session.commit()
+            self.session.flush()
         except exc.IntegrityError as e:
             self.session.rollback()
             error_msg = str(e.orig).lower()
@@ -86,11 +86,16 @@ class SqlAlchemyCustomerRepository(AbstractCustomerRepository):
             return None
         return CustomerMapper.to_domain(model)
 
-    def list(self) -> list[Customer]:
+    def list(self, limit: int | None = None, offset: int | None = None) -> list[Customer]:
         stmt = (
             select(CustomerModel)
             .where(CustomerModel.is_active == True)
             .order_by(CustomerModel.created_at.desc())
         )
+        if limit is not None:
+            stmt = stmt.limit(limit)
+        if offset is not None:
+            stmt = stmt.offset(offset)
+
         models = self.session.execute(stmt).scalars().all()
         return [CustomerMapper.to_domain(m) for m in models]

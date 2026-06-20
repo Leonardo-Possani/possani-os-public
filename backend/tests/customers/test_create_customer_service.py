@@ -123,25 +123,29 @@ def test_create_customer_accepts_cnpj_without_cpf() -> None:
     assert customer.cnpj.value == "11222333000181"
 
 
+def test_create_customer_accepts_without_cpf_or_cnpj() -> None:
+    service = CustomerService(repository=InMemoryCustomerRepository())
+
+    customer = service.create(
+        name="Maria Clara",
+        whatsapp="(11) 99999-1234",
+    )
+
+    assert customer.name.value == "Maria Clara"
+    assert customer.whatsapp.value == "11999991234"
+    assert customer.cpf is None
+    assert customer.cnpj is None
+
+
 def test_create_customer_rejects_both_cpf_and_cnpj() -> None:
     service = CustomerService(repository=InMemoryCustomerRepository())
 
-    with pytest.raises(ValueError, match="Exactly one of CPF or CNPJ must be provided."):
+    with pytest.raises(ValueError, match="CPF and CNPJ are mutually exclusive."):
         service.create(
             name="Maria Clara",
             whatsapp="(11) 99999-1234",
             cpf="529.982.247-25",
             cnpj="11.222.333/0001-81",
-        )
-
-
-def test_create_customer_rejects_without_cpf_or_cnpj() -> None:
-    service = CustomerService(repository=InMemoryCustomerRepository())
-
-    with pytest.raises(ValueError, match="Exactly one of CPF or CNPJ must be provided."):
-        service.create(
-            name="Maria Clara",
-            whatsapp="(11) 99999-1234",
         )
 
 

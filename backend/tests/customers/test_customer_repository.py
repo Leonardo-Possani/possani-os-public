@@ -6,7 +6,6 @@ from app.customers.domain import Address, Customer, CustomerName, Whatsapp, Cpf,
 from app.customers.interfaces import AbstractCustomerRepository as CustomerRepository
 from app.customers.in_memory_repository import InMemoryCustomerRepository
 from app.customers.repository import SqlAlchemyCustomerRepository
-from app.customers.service import CustomerNotFoundError
 from app.customers.models import CustomerModel
 from app.db import Base, engine, SessionFactory
 
@@ -166,6 +165,19 @@ class CustomerRepositoryContract:
         assert results[0].id == c2.id
         assert results[1].id == c1.id
 
+    def test_list_applies_limit_and_offset(self, repository: CustomerRepository):
+        c1 = Customer(id=uuid.uuid4(), name=CustomerName("Cliente Um"), whatsapp=Whatsapp("11911111111"))
+        c2 = Customer(id=uuid.uuid4(), name=CustomerName("Cliente Dois"), whatsapp=Whatsapp("11922222222"))
+        c3 = Customer(id=uuid.uuid4(), name=CustomerName("Cliente Tres"), whatsapp=Whatsapp("11933333333"))
+
+        repository.add(c1)
+        repository.add(c2)
+        repository.add(c3)
+
+        results = repository.list(limit=1, offset=1)
+
+        assert [customer.id for customer in results] == [c2.id]
+
     def test_list_returns_only_active_customers(self, repository: CustomerRepository):
         active = Customer(id=uuid.uuid4(), name=CustomerName("Cliente Ativo"), whatsapp=Whatsapp("11911111111"))
         inactive = Customer(id=uuid.uuid4(), name=CustomerName("Cliente Inativo"), whatsapp=Whatsapp("11922222222"))
@@ -247,7 +259,7 @@ class TestInMemoryRepository(CustomerRepositoryContract):
 
     def test_update_rejects_unknown_id(self, repository: CustomerRepository):
         customer = Customer(id=uuid.uuid4(), name=CustomerName("João Silva"), whatsapp=Whatsapp("11999999999"))
-        with pytest.raises(CustomerNotFoundError, match="Customer not found"):
+        with pytest.raises(ValueError, match="does not exist"):
             repository.update(customer)
 
 
