@@ -1,283 +1,221 @@
 # Possani OS
 
-Sistema de gestão para assistências técnicas desenvolvido com foco em **qualidade de software, arquitetura escalável e manutenibilidade de longo prazo**.
+Possani OS é um sistema para gestão de assistência técnica, criado para organizar clientes, ordens de serviço e histórico operacional de uma assistência real.
 
-Este projeto demonstra a aplicação prática de conceitos como **Clean Architecture**, **Domain-Driven Design (DDD)**, **TDD** e **boas práticas de desenvolvimento backend**, utilizando tecnologias modernas do ecossistema Python.
+O projeto tem como objetivo evoluir de uma base operacional simples para uma plataforma mais completa, com backend robusto, frontend web, automações e recursos inteligentes no futuro.
 
----
+## Objetivo
 
-## 🎯 Problema
+O Possani OS nasce para resolver problemas reais de uma assistência técnica:
 
-Muitas assistências técnicas ainda dependem de planilhas, anotações informais ou sistemas rígidos que dificultam a operação diária.
+* cadastro e gestão de clientes;
+* abertura e acompanhamento de ordens de serviço;
+* registro de equipamentos;
+* histórico de atendimentos;
+* organização do fluxo operacional;
+* base técnica preparada para evolução futura.
 
-O objetivo do Possani OS é fornecer uma base sólida para gerenciar:
+## Estado Atual
 
-* Cadastro de clientes
-* Ordens de serviço
-* Histórico de atendimentos
-* Controle operacional
-* Gestão de estoque e peças
-* Evolução futura para ambiente multiusuário
+O projeto está em desenvolvimento ativo.
 
-A proposta é construir um sistema capaz de crescer sem comprometer a qualidade do código e a previsibilidade da manutenção.
+Atualmente, o backend já possui:
 
----
+* API em FastAPI;
+* banco PostgreSQL via Docker;
+* migrations com Alembic;
+* módulo de clientes;
+* módulo de ordens de serviço;
+* regras de domínio isoladas;
+* repository pattern;
+* service layer;
+* testes unitários;
+* testes de integração com PostgreSQL real.
 
-## 🚀 Estado Atual
+O frontend já possui uma base inicial em Next.js/React, preparada para evoluir a interface da aplicação.
 
-O projeto encontra-se em desenvolvimento ativo.
+## Módulos Implementados
 
-### ✅ Implementado
+### Clientes
 
-* Módulo de Clientes
-* API REST com FastAPI
-* Persistência PostgreSQL
-* Migrations versionadas com Alembic
-* Validação de CPF
-* Validação de CNPJ
-* Validação de WhatsApp
-* Validação de CEP
-* Repository Pattern
-* Testes unitários
-* Testes de integração
+O módulo de clientes permite cadastrar, listar, consultar e desativar clientes.
 
-### 🚧 Em Desenvolvimento
+Principais características:
 
-* Módulo de Ordens de Serviço
-* Módulo de Estoque
-* Autenticação e Autorização
-* Frontend Web
-* Dashboard Operacional
+* entidade de domínio isolada;
+* validações de dados;
+* persistência com SQLAlchemy;
+* soft delete;
+* testes unitários e de integração.
 
----
+### Ordens de Serviço
 
-## 📊 Qualidade Técnica
+O módulo de ordens de serviço representa o fluxo principal da assistência técnica.
 
-O projeto foi construído com foco em qualidade e evolução contínua.
+Principais características:
 
-### Destaques
+* criação de ordem de serviço vinculada a um cliente;
+* registro de tipo de equipamento;
+* marca, modelo e identificação do equipamento;
+* problema relatado pelo cliente;
+* observações internas;
+* status da ordem de serviço;
+* regras de transição de status protegidas no domínio;
+* persistência em PostgreSQL;
+* testes unitários e de integração.
 
-* 213 testes automatizados
-* Testes unitários e de integração
-* PostgreSQL real nos testes de integração
-* Migrations versionadas
-* Ambiente totalmente containerizado
-* Arquitetura orientada ao domínio
-* Separação explícita entre regras de negócio e infraestrutura
-
----
-
-## 🏗️ Arquitetura
-
-O backend segue os princípios da **Clean Architecture**, mantendo o domínio isolado de frameworks, banco de dados e detalhes externos.
+Fluxo base:
 
 ```text
-┌──────────────────────┐
-│       FastAPI        │
-└──────────┬───────────┘
-           │
-┌──────────▼───────────┐
-│     Application      │
-│      Services        │
-└──────────┬───────────┘
-           │
-┌──────────▼───────────┐
-│       Domain         │
-│ Entities / VOs       │
-└──────────┬───────────┘
-           │
-┌──────────▼───────────┐
-│ Infrastructure Layer │
-│ SQLAlchemy / DB      │
-└──────────────────────┘
+cliente cadastrado -> ordem de serviço criada -> status acompanhado -> histórico preservado
 ```
 
-### Conceitos Aplicados
-
-#### Domain-Driven Design (DDD)
-
-* Entities
-* Value Objects
-* Domain Validation
-* Ubiquitous Language
-
-#### Repository Pattern
-
-Toda a persistência é acessada através de interfaces, permitindo alternar entre:
-
-* Repositórios em memória
-* PostgreSQL
-* Outros provedores futuros
-
-#### Explicit Mapping
-
-Conversão explícita entre:
-
-* Domínio
-* ORM
-* Schemas de API
-
-Evita acoplamento entre regras de negócio e infraestrutura.
-
-#### Dependency Inversion
-
-O domínio não depende de:
-
-* FastAPI
-* SQLAlchemy
-* PostgreSQL
-
-Essas tecnologias permanecem nas camadas externas.
-
----
-
-## 🛠️ Stack Tecnológica
+## Stack
 
 ### Backend
 
-* Python 3.12+
+* Python
 * FastAPI
-* SQLAlchemy 2.x
-* Pydantic v2
-
-### Banco de Dados
-
-* PostgreSQL 17
+* PostgreSQL
+* SQLAlchemy
 * Alembic
-
-### Testes
-
 * Pytest
-* Testes Unitários
-* Testes de Integração
-
-### Infraestrutura
-
 * Docker
-* Docker Compose
 
----
+### Frontend
 
-## 🧪 Estratégia de Testes
+* Next.js
+* React
+* TypeScript
 
-A suíte de testes é dividida em duas camadas para equilibrar velocidade e confiabilidade.
+### Arquitetura
 
-### Testes Unitários
+O projeto segue uma abordagem pragmática inspirada em Clean Architecture e DDD, com separação entre:
 
-Executam em memória e validam:
+* domínio;
+* casos de uso;
+* repositórios;
+* models de persistência;
+* schemas de API;
+* rotas FastAPI;
+* testes automatizados.
 
-* Regras de negócio
-* Entidades
-* Value Objects
-* Serviços
-* Mappers
+## Estrutura do Repositório
 
-Fornecem feedback rápido durante o desenvolvimento.
+```text
+backend/
+  app/
+    customers/
+    service_orders/
+    db.py
+    dependencies.py
+    main.py
+  alembic/
+  tests/
 
-### Testes de Integração
+frontend/
+  app/
+  components/
+  features/
+  lib/
+  providers/
 
-Executam contra um PostgreSQL real em container Docker.
+docs/
+  adr/
+  domain/
+  api.md
+  backend-patterns.md
+  database.md
+  testing-guide.md
 
-Validam:
-
-* Migrations
-* Repositórios
-* Persistência
-* Contratos da API
-
-Isso garante maior proximidade com o ambiente de produção.
-
-### Executando os testes
-
-```bash
-# Todos os testes
-docker compose exec backend pytest
-
-# Apenas integração PostgreSQL
-docker compose exec backend pytest -m postgres
+docker-compose.yml
+README.md
 ```
 
----
+## Documentação Técnica
 
-## 🚀 Executando o Projeto
+* `docs/api.md`: visão geral da API.
+* `docs/database.md`: decisões sobre banco de dados e migrations.
+* `docs/testing-guide.md`: comandos e estratégia de testes.
+* `docs/backend-patterns.md`: padrões técnicos adotados no backend.
+* `docs/domain/`: documentação dos módulos de domínio.
+* `docs/adr/`: decisões arquiteturais públicas.
 
-### 1. Clonar o repositório
+## Como Rodar o Projeto
+
+Crie o arquivo `.env` a partir do exemplo:
 
 ```bash
-git clone https://github.com/seu-usuario/possani-os-public.git
-cd possani-os-public
+cp .env.example .env
 ```
 
-### 2. Subir os serviços
+Suba os containers:
 
 ```bash
 docker compose up -d
 ```
 
-### 3. Acessar documentação da API
+Aplique as migrations no banco principal:
 
-Swagger:
+```bash
+docker compose exec backend alembic upgrade head
+```
+
+A API ficará disponível em:
 
 ```text
 http://localhost:8000/docs
 ```
 
-ReDoc:
+## Banco de Testes PostgreSQL
 
-```text
-http://localhost:8000/redoc
+Os testes de integração usam um banco separado chamado `possani_os_test`.
+
+Crie o banco de teste:
+
+```bash
+docker compose exec postgres psql -U possani -d postgres -c "CREATE DATABASE possani_os_test;"
 ```
 
----
+Aplique as migrations no banco de teste:
 
-## 🗺️ Roadmap
-
-### V1 — Backend Core
-
-* [x] Cadastro de Clientes
-* [x] Persistência PostgreSQL
-* [x] API REST
-* [x] Testes Automatizados
-* [x] Migrations
-
-### V2 — Operação
-
-* [ ] Ordens de Serviço
-* [ ] Controle de Estoque
-* [ ] Cadastro de Equipamentos
-* [ ] Histórico de Atendimento
-
-### V3 — Plataforma
-
-* [ ] Autenticação JWT
-* [ ] Controle de Permissões
-* [ ] Frontend React
-* [ ] Dashboard Operacional
-* [ ] Relatórios
-
----
-
-## 📚 Documentação
-
-A documentação complementar encontra-se na pasta:
-
-```text
-docs/
+```bash
+docker compose exec backend sh -c 'DATABASE_URL="$POSTGRES_TEST_DATABASE_URL" alembic upgrade head'
 ```
 
-Incluindo:
+## Rodando os Testes
 
-* ADRs (Architecture Decision Records)
-* Regras de desenvolvimento
-* Modelagem de domínio
-* Estratégia de testes
-* Padrões arquiteturais
+Rodar todos os testes:
 
----
+```bash
+docker compose exec backend pytest
+```
 
-## 👨‍💻 Objetivo do Projeto
+Rodar apenas testes PostgreSQL:
 
-Este repositório é mantido como parte de um portfólio profissional e demonstra a aplicação de práticas modernas de engenharia de software na construção de sistemas de negócio.
+```bash
+docker compose exec backend pytest -m postgres
+```
 
-O foco principal está na qualidade do código, arquitetura sustentável, testes automatizados e evolução incremental orientada ao domínio.
+Rodar testes sem PostgreSQL:
+
+```bash
+docker compose exec backend pytest -m "not postgres"
+```
+
+## Próximos Marcos
+
+Os próximos passos do projeto incluem:
+
+* evolução do frontend;
+* telas de clientes;
+* telas de ordens de serviço;
+* autenticação;
+* melhoria da experiência operacional;
+* automações futuras;
+* preparação para implantação em VPS.
+
+## Status
+
+Projeto em desenvolvimento ativo.
 
